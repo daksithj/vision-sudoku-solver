@@ -1,23 +1,31 @@
+import time as t
 import numpy as np
 import cv2
-import time as t
-from grideDetection import *
-from gridGenerator import *
-from attacedToGride import printOnTheScrene
-from sudokuSolver3by3 import sudokuSolver3by3
+from keras.models import load_model
+from grid_detection import detect_grid
+from grid_generator import get_the_grid
+from attach_to_grid import print_on_screen
+from sudoku_solver import Sudoku
 
 
 def capture():
-    frameWidth = 960
-    frameHeight = 720
+
+    num_model = load_model('mnist.h5')
+
+    frame_width = 960
+    frame_height = 720
+
     cap = cv2.VideoCapture(0)
+
     frame_rate = 30
-    # width is id number 3, height is id 4
-    cap.set(3, frameWidth)
-    cap.set(4, frameHeight)
-    # change brightness to 150
+
+    # Width is id number 3, height is id 4
+    cap.set(3, frame_width)
+    cap.set(4, frame_height)
+
+    # Change brightness to 150
     cap.set(10, 150)
-    # load the model with weights
+
     prev = 0
 
     while True:
@@ -31,22 +39,29 @@ def capture():
 
             img_result = img.copy()
 
-            if detectTheGrid(img_result):
+            if not detect_grid(img_result):
                 continue
 
-            # warped puzzle, puzzle contour coordinates, warped puzzle index, sudoku puzzle array, printing args
-            puzzle, puzzleCnt, dst, board, needToPrint = getTheGride(img_result)
+            # Warped puzzle, puzzle contour coordinates, warped puzzle index, sudoku puzzle array, printing args
+            grid_values = get_the_grid(img_result, num_model)
+
+            if grid_values is not None:
+                warped_puzzle, puzzle_contour, crop_indices, board, print_list = grid_values
+            else:
+                continue
 
             if np.all(board == 0):
                 continue
 
-            s = sudokuSolver3by3(9, board.copy())
-            solved_bord = s.solve()
+            sudoku_board = Sudoku(board.copy(), 9)
+            solution = sudoku_board.solve()
 
-            if np.any(solved_bord == 0):
+            if solution is None:
                 continue
 
-            printOnTheScrene(puzzle, needToPrint, solved_bord, img_result, puzzleCnt, dst)
+            print_image = print_on_screen(warped_puzzle, print_list, solution, img_result, puzzle_contour, crop_indices)
+            cv2.imshow('window', print_image)
+            cv2.waitKey(2000)
 
         cv2.imshow('window', img)
 
@@ -58,5 +73,4 @@ def capture():
 
 
 if __name__ == '__main__':
-    # print_hi('PyCharm')
     capture()

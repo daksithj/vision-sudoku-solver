@@ -19,7 +19,7 @@ def draw_extreme_corners(pts, original):
 
 
 def clean_helper(img):
-    # print(np.isclose(img, 0).sum())
+
     if np.isclose(img, 0).sum() / (img.shape[0] * img.shape[1]) >= 0.95:
         return np.zeros_like(img), False
 

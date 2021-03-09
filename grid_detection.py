@@ -2,7 +2,9 @@ import cv2
 import process_helpers
 import numpy as np
 
-def preprocess(img):
+
+def pre_process(img):
+
     img_gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
     # blur it
@@ -21,15 +23,16 @@ def preprocess(img):
 
     # dilate to increase border size
     result = cv2.dilate(morph, kernel, iterations=1)
+
     return result
 
 
-
 def find_contours(img, original):
-    # find contours on thresholded image
+
+    # Find contours on threshold image
     contours, _ = cv2.findContours(img, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
-    # sort by the largest
+    # Sort by the largest
     contours = sorted(contours, key=cv2.contourArea, reverse=True)
     polygon = None
 
@@ -63,16 +66,14 @@ def find_contours(img, original):
         # draw corresponding circles
         [process_helpers.draw_extreme_corners(x, original) for x in [top_left, top_right, bot_right, bot_left]]
 
-        return [top_left, top_right, bot_right, bot_left]
+        return True
 
-    return []
+    return False
 
 
-def detectTheGrid(img):
-    processed_img = preprocess(img)
+def detect_grid(img):
+
+    processed_img = pre_process(img)
     corners = find_contours(processed_img, img.copy())
 
-    if not corners:
-
-        return True
-    return False
+    return corners
