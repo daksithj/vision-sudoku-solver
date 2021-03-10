@@ -7,7 +7,7 @@ from grid_generator import get_the_grid
 from attach_to_grid import print_on_screen
 from sudoku_solver import Sudoku
 
-MODEL_NAME = 'mnist.h5'
+MODEL_NAME = 'digit_model.h5'
 
 
 class VisionSudokuError(Exception):
@@ -68,6 +68,8 @@ def capture(cap, frame_rate, gui):
 
     prev = 0
 
+    solution_found = False
+
     while True:
 
         if gui.kill_signal:
@@ -105,8 +107,10 @@ def capture(cap, frame_rate, gui):
                 continue
 
             print_image = print_on_screen(warped_puzzle, print_list, solution, img_result, puzzle_contour, crop_indices)
-            gui.update(print_image)
+            gui.update(print_image, solution=True)
+            solution_found = True
             break
 
-    cap.release()
+    if not solution_found:
+        cap.release()
     cv2.destroyAllWindows()

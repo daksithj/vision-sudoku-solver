@@ -10,7 +10,7 @@ from sudoku_solver import Sudoku
 
 def capture():
 
-    num_model = load_model('mnist.h5')
+    num_model = load_model('digit_model.h5')
 
     frame_width = 960
     frame_height = 720

@@ -56,10 +56,10 @@ def find_contours(img, original):
 
         # if its not a square, we don't want it
         if bot_right[1] - top_right[1] == 0:
-            return []
+            return False
         # Checking if horizontal side and vertical side length is approximately equal
         if not (0.95 < ((top_right[0] - top_left[0]) / (bot_right[1] - top_right[1])) < 1.05):
-            return []
+            return False
 
         cv2.drawContours(original, [polygon], 0, (0, 0, 255), 3)
 
