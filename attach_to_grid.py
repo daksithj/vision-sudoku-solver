@@ -30,6 +30,8 @@ def print_on_screen(puzzle, print_list, solution, img_result, puzzle_contour, cr
         # The font size as a scale
         font_scale = (end_x - start_x) / 50
 
+        thickness = (end_x - start_x) // 30
+
         # bottom left corner coordinate to print number
         text_x = int((end_x - start_x) * 0.33)
         text_y = int((end_y - start_y) * -0.2)
@@ -38,7 +40,7 @@ def print_on_screen(puzzle, print_list, solution, img_result, puzzle_contour, cr
 
         index = val['index']
         cv2.putText(output_image, str(solution[index[1]][index[0]]), (text_x, text_y),
-                    cv2.FONT_HERSHEY_SIMPLEX, font_scale, (0, 0, 255), 2)
+                    cv2.FONT_HERSHEY_SIMPLEX, font_scale, (0, 0, 255), thickness)
 
     original_image = img_result.copy()
     wrapped_image = output_image.copy()

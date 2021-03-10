@@ -1,0 +1,253 @@
+#: import utils kivy.utils
+
+WindowManager:
+    StartWindow:
+    ImageSolverWindow:
+    LiveFeedWindow:
+    ImageSolutionWindow
+
+<StartWindow>
+    name: "start_window"
+    canvas.before:
+        Color:
+            rgb: utils.get_color_from_hex("#26292E")
+        Rectangle:
+            size: self.size
+            pos: self.pos
+
+    FloatLayout:
+        size: root.width, root.height
+        spacing: 10
+        padding: 20
+
+        Image:
+            source: 'resources/logo.png'
+            size_hint : 0.2, 0.2
+            pos_hint: {"center_x": 0.5, "center_y": 0.85}
+
+        Label:
+            text: "Vision Sudoku"
+            font_size: 32
+            pos_hint: {"center_x": 0.5, "center_y": 0.72}
+            bold: True
+
+        Button:
+            text: "Use Image"
+            font_size: 24
+            size_hint : 0.4, 0.1
+            pos_hint: {"center_x": 0.5, "center_y": 0.45}
+            bold: True
+            on_release: root.use_image_solver()
+
+        Button:
+            text: "Live Feed"
+            font_size: 24
+            size_hint : 0.4, 0.1
+            pos_hint: {"center_x": 0.5, "center_y": 0.25}
+            bold: True
+            on_release: root.use_live_feed()
+
+<ImageSolverWindow>
+    name: "image_solver"
+    canvas.before:
+        Color:
+            rgb: utils.get_color_from_hex("#26292E")
+        Rectangle:
+            size: self.size
+            pos: self.pos
+
+    FloatLayout:
+        size: root.width, root.height
+        spacing: 10
+        padding: 20
+
+        Image:
+            source: 'resources/logo.png'
+            size_hint : 0.15, 0.15
+            pos_hint: {"center_x": 0.5, "center_y": 0.9}
+
+        Label:
+            text: "Select Image File"
+            font_size: 24
+            pos_hint: {"center_x": 0.5, "center_y": 0.79}
+
+        BoxLayout:
+            pos_hint: {"x":0.1, "top": 0.70}
+            size_hint: (0.8, 0.5)
+            orientation: 'vertical'
+
+            Spinner:
+                id: image_file_chooser_drive
+                text: 'Choose drive'
+                size_hint: 1, 0.1
+                sync_height: True
+                on_press: root.update_drives()
+                on_text: root.update_file_path_dir()
+
+            FileChooserListView:
+                id: image_file_chooser
+                path: '.'
+                filters: ['*.jpg', '*.jpeg', '*.png']
+                on_selection: root.on_select_file(self.selection)
+
+        Label:
+            text: "Selected file:"
+            pos_hint: {"x":-0.33,"center_y": 0.16}
+            font_size: 14
+
+        TextInput:
+            id: selected_file
+            text: ""
+            disabled: True
+            size_hint: (0.82, 0.04)
+            foreground_color: (1, 1, 1, 1)
+            background_normal: ''
+            background_color: utils.get_color_from_hex('#60686e')
+            pos_hint: {"center_x":0.5,"y": 0.108}
+            halign: 'left'
+            font_size: 14
+
+        Button:
+            id: submit_button
+            text: 'Submit'
+            disabled: True
+            on_release: root.on_submit_file()
+            size_hint: (0.2, 0.05)
+            pos_hint: {"right":0.9,"y": 0.04}
+
+        Button:
+            text: 'Back'
+            on_release:root.on_back()
+            size_hint: (0.12, 0.04)
+            pos_hint: {"right":0.22,"y": 0.72}
+
+<ImageSolutionWindow>
+    name: "solution"
+    canvas.before:
+        Color:
+            rgb: utils.get_color_from_hex("#26292E")
+        Rectangle:
+            size: self.size
+            pos: self.pos
+
+    FloatLayout:
+        size: root.width, root.height
+        spacing: 10
+        padding: 20
+
+        Image:
+            source: 'resources/logo.png'
+            size_hint : 0.15, 0.15
+            pos_hint: {"center_x": 0.5, "center_y": 0.9}
+
+        Label:
+            text: "Solution"
+            font_size: 24
+            pos_hint: {"center_x": 0.5, "center_y": 0.79}
+
+        Image:
+            id: solution_image
+            source: 'resources/logo.png'
+            size_hint : 0.70, 0.70
+            allow_stretch: True
+            keep_ratio: True
+            pos_hint: {"center_x": 0.5, "center_y": 0.45}
+
+        Button:
+            id: menu_button
+            text: 'Main Menu'
+            size_hint: (0.3, 0.08)
+            pos_hint: {"center_x":0.7,"center_y": 0.10}
+            on_release: root.on_main_menu()
+
+        Button:
+            id: back_button
+            text: 'Try Again'
+            size_hint: (0.3, 0.08)
+            pos_hint: {"center_x":0.3,"center_y": 0.10}
+            on_release: root.on_back()
+
+<SolutionErrorPopup@Popup>
+    title: "Solving Error"
+    auto_dismiss: False
+    size_hint: 0.8, 0.22
+    pos_hint: {"center_x":0.5,"center_y": 0.5}
+    separator_color: utils.get_color_from_hex("#D62718")
+
+    FloatLayout:
+
+        Label:
+            id: error_message
+            text: ""
+            font_size: 14
+            pos_hint: {"center_x":0.5,"center_y": 0.8}
+
+        Button:
+            text: "Dismiss"
+            font_size: 14
+            size_hint: (0.3, 0.3)
+            pos_hint: {"center_x":0.5,"center_y": 0.3}
+            on_release: root.on_confirm()
+
+<InitializeCamPopup@Popup>
+    title: "Initializing Camera"
+    auto_dismiss: False
+    size_hint: 0.8, 0.22
+    pos_hint: {"center_x":0.5,"center_y": 0.5}
+    separator_color: utils.get_color_from_hex("##C8ffA8")
+
+    FloatLayout:
+
+        Label:
+            text: "Please wait until the camera is started"
+            font_size: 16
+            pos_hint: {"center_x":0.5,"center_y": 0.5}
+
+
+<LiveFeedWindow>
+    name: "live_feed"
+    canvas.before:
+        Color:
+            rgb: utils.get_color_from_hex("#26292E")
+        Rectangle:
+            size: self.size
+            pos: self.pos
+
+
+    FloatLayout:
+        size: root.width, root.height
+        spacing: 10
+        padding: 20
+
+
+        Image:
+            source: 'resources/logo.png'
+            size_hint : 0.1, 0.1
+            pos_hint: {"center_x": 0.5, "center_y": 0.94}
+
+        Label:
+            text: "Live Feed"
+            font_size: 24
+            pos_hint: {"center_x": 0.5, "center_y": 0.87}
+
+        Image:
+            id: cam_feed
+            source: 'resources/logo.png'
+            size_hint : 0.93, 0.93
+            allow_stretch: True
+            keep_ratio: True
+            pos_hint: {"center_x": 0.5, "center_y": 0.5}
+
+        Button:
+            id: unfreeze_button
+            text: 'Unfreeze'
+            size_hint: (0.3, 0.08)
+            pos_hint: {"center_x":0.7,"center_y": 0.10}
+            #on_release: root.on_main_menu()
+
+        Button:
+            text: 'Main Menu'
+            size_hint: (0.3, 0.08)
+            pos_hint: {"center_x":0.3,"center_y": 0.10}
+            background_color: (1, 0, 0, 1)
+            on_release: root.on_back()
