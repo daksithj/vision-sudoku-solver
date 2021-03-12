@@ -151,20 +151,50 @@ WindowManager:
             size_hint : 0.70, 0.70
             allow_stretch: True
             keep_ratio: True
-            pos_hint: {"center_x": 0.5, "center_y": 0.45}
+            pos_hint: {"center_x": 0.5, "center_y": 0.50}
+
+        Label:
+            text: "Computation times"
+            bold: True
+            font_size: 12
+            pos_hint: {"center_x": 0.5, "center_y": 0.224}
+
+        Label:
+            id:read_time
+            text: "Reading image:  0.000s"
+            font_size: 12
+            pos_hint: {"center_x": 0.3, "center_y": 0.19}
+
+        Label:
+            id:extract_time
+            text: "Extract puzzle:  0.000s"
+            font_size: 12
+            pos_hint: {"center_x": 0.7, "center_y": 0.19}
+
+        Label:
+            id:solve_time
+            text: "Solving puzzle:   0.000s"
+            font_size: 12
+            pos_hint: {"center_x": 0.3, "center_y": 0.16}
+
+        Label:
+            id:total_time
+            text: "Total time:        0.000s"
+            font_size: 12
+            pos_hint: {"center_x": 0.697, "center_y": 0.16}
 
         Button:
             id: menu_button
             text: 'Main Menu'
             size_hint: (0.3, 0.08)
-            pos_hint: {"center_x":0.7,"center_y": 0.10}
+            pos_hint: {"center_x":0.7,"center_y": 0.08}
             on_release: root.on_main_menu()
 
         Button:
             id: back_button
             text: 'Try Again'
             size_hint: (0.3, 0.08)
-            pos_hint: {"center_x":0.3,"center_y": 0.10}
+            pos_hint: {"center_x":0.3,"center_y": 0.08}
             on_release: root.on_back()
 
 <SolutionErrorPopup@Popup>

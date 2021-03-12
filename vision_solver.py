@@ -12,16 +12,17 @@ MODEL_NAME = 'digit_model.h5'
 
 class VisionSudokuError(Exception):
     def __init__(self, message):
-
-        # Call the base class constructor with the parameters it needs
         super(VisionSudokuError, self).__init__(message)
 
 
 def single_image(image_loc):
 
+    start_time = t.time()
+
     image = cv2.imread(image_loc)
 
     num_model = load_model(MODEL_NAME)
+    read_time = t.time()
 
     # if not detect_grid(image):
     #     raise Exception('Cannot detect a grid in the image')
@@ -33,15 +34,34 @@ def single_image(image_loc):
     else:
         raise VisionSudokuError('Cannot extract puzzle from the image.')
 
+    process_time = t.time()
+
     sudoku_board = Sudoku(board.copy(), 9)
     solution = sudoku_board.solve()
+
+    solve_time = t.time()
 
     if solution is None:
         raise VisionSudokuError("The puzzle was not read properly or it is not solvable.")
 
     print_image = print_on_screen(warped_puzzle, print_list, solution, image, puzzle_contour, crop_indices)
 
-    return print_image
+    final_time = t.time()
+
+    input_time = round(read_time - start_time, 3)
+    extract_time = round(process_time - read_time, 3)
+    solving_time = round(solve_time - process_time, 3)
+    total_time = round(final_time - start_time, 3)
+
+    print(f'Time to read image: {input_time} seconds')
+    print(f'Time pre-process and extract puzzle and digits: {extract_time} seconds')
+    print(f'Time to solve the puzzle: {solving_time} seconds')
+    print(f'Total time: {total_time} seconds')
+
+    timing = {'input_time': input_time, 'extract_time': extract_time,
+              'solving_time': solving_time, 'total_time': total_time}
+
+    return print_image, timing
 
 
 def initialize_cam():

@@ -93,8 +93,8 @@ class ImageSolverWindow(Screen):
         file_location = self.ids.selected_file.text
 
         try:
-            solution = single_image(file_location)
-            self.solution_window.update_image(solution)
+            solution, timing = single_image(file_location)
+            self.solution_window.update_image(solution, timing)
 
         except VisionSudokuError as e:
             error_popup = SolutionErrorPopup(message=str(e))
@@ -114,19 +114,23 @@ class ImageSolutionWindow(Screen):
     def __init__(self, **kwargs):
         super(ImageSolutionWindow, self).__init__(**kwargs)
 
-    def update_image(self, image):
-        cv2.imwrite('output.png', image)
-        self.ids.solution_image.source = 'output.png'
+    def update_image(self, frame, timing):
+        buf1 = cv2.flip(frame, 0)
+        buf = buf1.tostring()
+        texture1 = Texture.create(size=(frame.shape[1], frame.shape[0]), colorfmt='bgr')
+        texture1.blit_buffer(buf, colorfmt='bgr', bufferfmt='ubyte')
+        self.ids.solution_image.texture = texture1
+
+        self.ids.read_time.text = f'Reading image:  {timing["input_time"]}s'
+        self.ids.extract_time.text = f'Extract puzzle:  {timing["extract_time"]}s'
+        self.ids.solve_time.text = f'Solving puzzle:   {timing["solving_time"]}s'
+        self.ids.total_time.text = f'Total time:        {timing["total_time"]}s'
 
     def on_main_menu(self):
         self.manager.current = 'start_window'
-        if os.path.exists('output.png'):
-            os.remove('output.png')
 
     def on_back(self):
         self.manager.current = 'image_solver'
-        if os.path.exists('output.png'):
-            os.remove('output.png')
 
 
 class SolutionErrorPopup(Popup):
@@ -152,6 +156,7 @@ class InitializeCamPopup(Popup):
         if self.start is not None:
             self.start.start_live_feed()
         self.dismiss()
+
 
 class LiveFeedWindow(Screen):
 
@@ -191,6 +196,7 @@ class LiveFeedWindow(Screen):
             self.thread.join()
 
         self.manager.current = 'start_window'
+
 
 class WindowManager(ScreenManager):
 
