@@ -6,67 +6,67 @@ from skimage.segmentation import clear_border
 from scipy.spatial import distance as dist
 import operator
 
+'''
+ordering the coordinate point 
+input : 4 point of the square
+return : ordered point (Numpy array)
+'''
 
-def order_points(pts):
-    # Take the four coordinates and sort on the x coordinate
-    x_sorted = pts[np.argsort(pts[:, 0]), :]
 
-    # The leftmost 2 coordinates
+def order_points(points):
+    x_sorted = points[np.argsort(points[:, 0]), :]
+
     left_most = x_sorted[:2, :]
-    # The rightmost 2 coordinates
     right_most = x_sorted[2:, :]
 
-    # Find the top left and bottom left coordinate
     left_most = left_most[np.argsort(left_most[:, 1]), :]
     (tl, bl) = left_most
 
-    # Find the other corner. Highest euclidean distance from top left corner.
     distance = dist.cdist(tl[np.newaxis], right_most, "euclidean")[0]
 
-    # Bottom right and top right corners
     (br, tr) = right_most[np.argsort(distance)[::-1], :]
 
     return np.array([tl, tr, br, bl], dtype="float32")
 
 
-def four_point_transform(image, pts):
-    rect = order_points(pts)
+'''
+take the perspective transform and wrap the grid from the input image 
+input: image(gray scaled image) , 
+       pts(4 coordinates of the square)
+return:
+      wrap: wraped image 
+      crop_indices: transpose coordinates
+'''
 
-    # Top-left, top-right, bottom-right, bottom-left coordinates
+
+def get_perspective_transform(image, points):
+    rect = order_points(points)
+
     (tl, tr, br, bl) = rect
 
-    # Find width and heights
-    # Think of it has finding hypotenuse length of a triangle
+    w_a = np.sqrt(((br[0] - bl[0]) ** 2) + ((br[1] - bl[1]) ** 2))
+    w_b = np.sqrt(((tr[0] - tl[0]) ** 2) + ((tr[1] - tl[1]) ** 2))
 
-    width_a = np.sqrt(((br[0] - bl[0]) ** 2) + ((br[1] - bl[1]) ** 2))
-    width_b = np.sqrt(((tr[0] - tl[0]) ** 2) + ((tr[1] - tl[1]) ** 2))
+    max_width = max(int(w_a), int(w_b))
 
-    # We take the max of top width and bottom width to make sure no important part is cropped out
-    max_width = max(int(width_a), int(width_b))
-
-    height_a = np.sqrt(((tr[0] - br[0]) ** 2) + ((tr[1] - br[1]) ** 2))
-    height_b = np.sqrt(((tl[0] - bl[0]) ** 2) + ((tl[1] - bl[1]) ** 2))
-    max_height = max(int(height_a), int(height_b))
+    h_a = np.sqrt(((tr[0] - br[0]) ** 2) + ((tr[1] - br[1]) ** 2))
+    h_b = np.sqrt(((tl[0] - bl[0]) ** 2) + ((tl[1] - bl[1]) ** 2))
+    max_height = max(int(h_a), int(h_b))
 
     crop_indices = np.array([
-        [0, 0],  # Index for upper left corner
-        [max_width - 1, 0],  # Index for upper right corner (-1 because it is an index)
-        [max_width - 1, max_height - 1],  # Index for lower right corner
-        [0, max_height - 1]], dtype="float32")  # Index for lower left corner
+        [0, 0],
+        [max_width - 1, 0],
+        [max_width - 1, max_height - 1],
+        [0, max_height - 1]], dtype="float32")
 
-    # Take the corner coordinates and warp them to fit the index above
     perspective_trans = cv2.getPerspectiveTransform(rect, crop_indices)
-    # print(perspective_trans)
+
     warped = cv2.warpPerspective(image, perspective_trans, (max_width, max_height))
 
     return warped, crop_indices
 
 
 def find_extreme_corners(polygon, limit_fn, compare_fn):
-    # limit_fn is the min or max function
-    # compare_fn is the np.add or np.subtract function
-
-    # if we are trying to find bottom left corner, we know that it will have the smallest (x - y) value
     section, _ = limit_fn(enumerate([compare_fn(pt[0][0], pt[0][1]) for pt in polygon]),
                           key=operator.itemgetter(1))
 
@@ -77,23 +77,36 @@ def draw_extreme_corners(pts, original):
     cv2.circle(original, pts, 7, (0, 255, 0), cv2.FILLED)
 
 
-# make sure this is the one we are looking for
+'''
+make sure that this is the one we are looking square shape
+input:  puzzle_contour (4 coordinates)
+return: if it is a square return true else return false
+'''
+
 
 def checking_found_contors_in_correct_format(puzzle_contour):
-    # find its extreme corners
-    top_left = find_extreme_corners(puzzle_contour, min, np.add)  # has smallest (x + y) value
-    top_right = find_extreme_corners(puzzle_contour, max, np.subtract)  # has largest (x - y) value
-    bot_right = find_extreme_corners(puzzle_contour, max, np.add)  # has largest (x + y) value
+    top_left = find_extreme_corners(puzzle_contour, min, np.add)
+    top_right = find_extreme_corners(puzzle_contour, max, np.subtract)
+    bot_right = find_extreme_corners(puzzle_contour, max, np.add)
 
-    # if its not a square, we don't want it
     if bot_right[1] - top_right[1] == 0:
         return False
-    # Checking if horizontal side and vertical side length is approximately equal
+
     if not (0.95 < ((top_right[0] - top_left[0]) / (bot_right[1] - top_right[1])) < 1.05):
         return False
 
     return True
 
+'''
+detect the puzzle from the input image
+input : image (image with sudoku grid) 
+
+output : puzzle_wp_colour - extracted colored grid 
+         puzzle_wp_gray   - extracted gray colored grid
+         puzzle_contour   - coordinates of the puzzle
+         crop_indices     - coordinates of the perspective transformed puzzle
+
+'''
 
 def find_puzzle(image, is_a_liveFeed=False):
     # Convert to grayscale
@@ -101,7 +114,6 @@ def find_puzzle(image, is_a_liveFeed=False):
 
     # Add gaussian blur
     blurred = cv2.GaussianBlur(gray, (7, 7), 3)
-
 
     # Get the threshold
     thresh = cv2.adaptiveThreshold(blurred, 255,
@@ -118,7 +130,6 @@ def find_puzzle(image, is_a_liveFeed=False):
     contours = sorted(contours, key=cv2.contourArea, reverse=True)
     puzzle_contour = None
 
-
     for c in contours:
         # Get contour perimeter
         peri = cv2.arcLength(c, True)
@@ -128,7 +139,8 @@ def find_puzzle(image, is_a_liveFeed=False):
         # Find an approximate shape (square). The argument is the maximum distance from contour to approximated shape
         approx = cv2.approxPolyDP(c, 0.02 * peri, True)
 
-        # Loop done from highest to lowest perimeters. The first 4 sided contour is the puzzle box.
+        # Loop done from highest to lowest perimeters. The first 4 sided contour is the puzzle box and area inside
+        # the 4 contorts.
         if len(approx) == 4 and area > 1000:
             # The puzzle contour
             puzzle_contour = approx
@@ -138,15 +150,22 @@ def find_puzzle(image, is_a_liveFeed=False):
         return None
 
     # The warped extracted puzzle and its corner coordinates (indexes)
-    puzzle_wp_colour, crop_indices = four_point_transform(image, puzzle_contour.reshape(4, 2))
+    puzzle_wp_colour, crop_indices = get_perspective_transform(image, puzzle_contour.reshape(4, 2))
 
     # The warped extracted puzzle (grayscale) and its corner coordinates (indexes)
-    puzzle_wp_gray, crop_indices = four_point_transform(gray, puzzle_contour.reshape(4, 2))
+    puzzle_wp_gray, crop_indices = get_perspective_transform(gray, puzzle_contour.reshape(4, 2))
 
     return puzzle_wp_colour, puzzle_wp_gray, puzzle_contour, crop_indices
 
+'''
+extract the digit of each cell
+input : cell (single cell of the sudoku puzzle) 
 
-def extract_digit(cell, debug=False):
+output : digit - predicted number
+
+'''
+
+def extract_digit(cell):
     thresh = cv2.threshold(cell, 0, 255, cv2.THRESH_BINARY_INV | cv2.THRESH_OTSU)[1]
     thresh = clear_border(thresh)
 
@@ -156,27 +175,19 @@ def extract_digit(cell, debug=False):
     if len(contours) == 0:
         return None
 
-    # Get the contour with the maximum areas
     digit_contour = max(contours, key=cv2.contourArea)
     mask = np.zeros(thresh.shape, dtype="uint8")
 
-    # Take black image, draw the max contour. 1st arg: black image, 2nd: list of contours (only one here)
-    # 3rd: index of contour (-1 means draw all in the list), 4th: Colour 5th: Thickness (-1 means fill it)
+
     cv2.drawContours(mask, [digit_contour], -1, 255, -1)
 
     (h, w) = thresh.shape
-    # See which percentage of image is filled by the above filled contour
     percent_filled = cv2.countNonZero(mask) / float(w * h)
 
     if percent_filled < 0.03:
         return None
 
-    # Using the above mask using the and operation extract the digit from the image input
     digit = cv2.bitwise_and(thresh, thresh, mask=mask)
-
-    if debug:
-        cv2.imshow(" ", digit)
-        cv2.waitKey(0)
 
     return digit
 
@@ -198,7 +209,19 @@ def check_allowed_values(allowed_values, x, y, value, box_dim=3):
         for j in range(begin_column, begin_column + box_dim):
             allowed_values[i][j][value] = False
 
+'''
+convert the sudoku puzzle to a two dimesional array
+input : img_result - image of the sudoku puzzle
+        model - trained OCR model
 
+
+output : puzzle_wp_colour  - extracted colored grid 
+         puzzle_contour - coordinates of the puzzle
+         dst - coordinates of the perspective transformed puzzle
+         board - two dimensional array containing the puzzle values
+         print_list - locations where we need to place numbers on the sudoku puzzle 
+
+'''
 def get_the_grid(img_result, model, is_a_liveFeed=False):
     # The warped puzzle,warped puzzle (grayscale), puzzle contour coordinates (in image), warped puzzle corner indices
     found_puzzle = find_puzzle(img_result, is_a_liveFeed)
@@ -215,7 +238,6 @@ def get_the_grid(img_result, model, is_a_liveFeed=False):
         return None
 
     # four_point_transform(img_result.copy(), puzzle_contour.reshape(4, 2))
-
     print_list = []
     digit_count = 0
 
@@ -238,7 +260,7 @@ def get_the_grid(img_result, model, is_a_liveFeed=False):
 
             # Crop the cell from the warped transform image and then extract the digit from the cell
             cell = puzzle_wp_gray[start_y:end_y, start_x:end_x]
-            digit = extract_digit(cell, False)
+            digit = extract_digit(cell)
 
             # Verify that the cell is not empty
             if digit is not None:

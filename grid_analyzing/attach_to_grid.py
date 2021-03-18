@@ -1,11 +1,10 @@
 import cv2
 import numpy as np
-from grid_generator import order_points
+from grid_analyzing.grid_generator import order_points
 
 
 def unwrap_image(img_src, img_dst, ordered_points, crop_indices):
     ordered_points = np.array(ordered_points)
-
 
     homography, status = cv2.findHomography(crop_indices, ordered_points)
 

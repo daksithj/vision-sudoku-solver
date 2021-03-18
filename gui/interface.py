@@ -2,10 +2,10 @@ from kivy.app import App
 from kivy.lang import Builder
 from kivy.core.window import Window
 from kivy.graphics.texture import Texture
-from kivy.clock import Clock, mainthread
+from kivy.clock import mainthread
 from kivy.uix.screenmanager import ScreenManager, Screen, ScreenManagerException, RiseInTransition
 from kivy.uix.popup import Popup
-from vision_solver import single_image, initialize_cam, capture, VisionSudokuError
+from grid_analyzing.vision_solver import single_image, initialize_cam, capture, VisionSudokuError
 import cv2
 import psutil
 from threading import Thread
@@ -209,7 +209,7 @@ class VisionSudokuApp(App):
     def build(self):
         self.title = 'Vision Sudoku'
         self.icon = 'resources/logo.png'
-        Builder.load_file('interface.kv')
+        Builder.load_file('gui/interface.kv')
         window_manager = WindowManager()
         start_window = StartWindow()
         window_manager.add_widget(start_window)
@@ -217,5 +217,5 @@ class VisionSudokuApp(App):
         return window_manager
 
 
-if __name__ == '__main__':
-    VisionSudokuApp().run()
+# if __name__ == '__main__':
+#     VisionSudokuApp().run()
