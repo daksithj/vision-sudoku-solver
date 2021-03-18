@@ -7,7 +7,6 @@ from kivy.uix.screenmanager import ScreenManager, Screen, ScreenManagerException
 from kivy.uix.popup import Popup
 from vision_solver import single_image, initialize_cam, capture, VisionSudokuError
 import cv2
-import os
 import psutil
 from threading import Thread
 

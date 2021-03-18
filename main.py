@@ -2,14 +2,12 @@ import time as t
 import numpy as np
 import cv2
 from keras.models import load_model
-from grid_detection import detect_grid
 from grid_generator import get_the_grid
 from attach_to_grid import print_on_screen
 from sudoku_solver import Sudoku
 
 
 def capture():
-
     num_model = load_model('digit_model.h5')
 
     frame_width = 960
@@ -39,11 +37,11 @@ def capture():
 
             img_result = img.copy()
 
-            if not detect_grid(img_result):
-                continue
+            # if not detect_grid(img_result):
+            #     continue
 
             # Warped puzzle, puzzle contour coordinates, warped puzzle index, sudoku puzzle array, printing args
-            grid_values = get_the_grid(img_result, num_model)
+            grid_values = get_the_grid(img_result, num_model, True)
 
             if grid_values is not None:
                 warped_puzzle, puzzle_contour, crop_indices, board, print_list = grid_values

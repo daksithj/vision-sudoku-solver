@@ -2,7 +2,6 @@ import time as t
 import numpy as np
 import cv2
 from keras.models import load_model
-from grid_detection import detect_grid
 from grid_generator import get_the_grid
 from attach_to_grid import print_on_screen
 from sudoku_solver import Sudoku
@@ -34,9 +33,13 @@ def single_image(image_loc):
     else:
         raise VisionSudokuError('Cannot extract puzzle from the image.')
 
+
     process_time = t.time()
 
     sudoku_board = Sudoku(board.copy(), 9)
+
+    print(board)
+
     solution = sudoku_board.solve()
 
     solve_time = t.time()
@@ -106,25 +109,28 @@ def capture(cap, frame_rate, gui):
 
             img_result = img.copy()
 
-            if not detect_grid(img_result):
-                continue
-
             # Warped puzzle, puzzle contour coordinates, warped puzzle index, sudoku puzzle array, printing args
-            grid_values = get_the_grid(img_result, num_model)
+            grid_values = get_the_grid(img_result, num_model,True)
+
 
             if grid_values is not None:
                 warped_puzzle, puzzle_contour, crop_indices, board, print_list = grid_values
             else:
                 continue
 
+
             if np.all(board == 0):
                 continue
+
+
 
             sudoku_board = Sudoku(board.copy(), 9)
             solution = sudoku_board.solve()
 
             if solution is None:
                 continue
+
+
 
             print_image = print_on_screen(warped_puzzle, print_list, solution, img_result, puzzle_contour, crop_indices)
             gui.update(print_image, solution=True)
