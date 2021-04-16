@@ -7,9 +7,9 @@ from scipy.spatial import distance as dist
 import operator
 
 '''
-ordering the coordinate point 
-input : 4 point of the square
-return : ordered point (Numpy array)
+Ordering the coordinate point 
+Input : 4 point of the square
+Return : Ordered point (Numpy array)
 '''
 
 
@@ -30,12 +30,12 @@ def order_points(points):
 
 
 '''
-take the perspective transform and wrap the grid from the input image 
-input: image(gray scaled image) , 
-       pts(4 coordinates of the square)
-return:
-      wrap: wraped image 
-      crop_indices: transpose coordinates
+Take the perspective transform and wrap the grid from the input image 
+Input: image (Gray scaled image) , 
+       points (4 coordinates of the square)
+Return:
+      warp: Warped image 
+      crop_indices: Transpose coordinates
 '''
 
 
@@ -78,13 +78,13 @@ def draw_extreme_corners(pts, original):
 
 
 '''
-make sure that this is the one we are looking square shape
-input:  puzzle_contour (4 coordinates)
-return: if it is a square return true else return false
+Make sure that this is the one we are looking square shape
+Input:  puzzle_contour (4 coordinates)
+Return: If it is a square return True else return False
 '''
 
 
-def checking_found_contors_in_correct_format(puzzle_contour):
+def check_contour_format(puzzle_contour):
     top_left = find_extreme_corners(puzzle_contour, min, np.add)
     top_right = find_extreme_corners(puzzle_contour, max, np.subtract)
     bot_right = find_extreme_corners(puzzle_contour, max, np.add)
@@ -97,18 +97,20 @@ def checking_found_contors_in_correct_format(puzzle_contour):
 
     return True
 
-'''
-detect the puzzle from the input image
-input : image (image with sudoku grid) 
-
-output : puzzle_wp_colour - extracted colored grid 
-         puzzle_wp_gray   - extracted gray colored grid
-         puzzle_contour   - coordinates of the puzzle
-         crop_indices     - coordinates of the perspective transformed puzzle
 
 '''
+Detect the puzzle from the input image
+Input : image (image with sudoku grid) 
 
-def find_puzzle(image, is_a_liveFeed=False):
+Output : puzzle_wp_colour - Extracted colored grid 
+         puzzle_wp_gray   - Extracted gray colored grid
+         puzzle_contour   - Coordinates of the puzzle
+         crop_indices     - Coordinates of the perspective transformed puzzle
+
+'''
+
+
+def find_puzzle(image, is_live_feed=False):
     # Convert to grayscale
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
@@ -116,8 +118,7 @@ def find_puzzle(image, is_a_liveFeed=False):
     blurred = cv2.GaussianBlur(gray, (7, 7), 3)
 
     # Get the threshold
-    thresh = cv2.adaptiveThreshold(blurred, 255,
-                                   cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 11, 2)
+    thresh = cv2.adaptiveThreshold(blurred, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 11, 2)
 
     # Invert colours
     thresh = cv2.bitwise_not(thresh)
@@ -146,7 +147,7 @@ def find_puzzle(image, is_a_liveFeed=False):
             puzzle_contour = approx
             break
 
-    if puzzle_contour is None or (is_a_liveFeed and not checking_found_contors_in_correct_format(puzzle_contour)):
+    if puzzle_contour is None or (is_live_feed and not check_contour_format(puzzle_contour)):
         return None
 
     # The warped extracted puzzle and its corner coordinates (indexes)
@@ -157,13 +158,15 @@ def find_puzzle(image, is_a_liveFeed=False):
 
     return puzzle_wp_colour, puzzle_wp_gray, puzzle_contour, crop_indices
 
-'''
-extract the digit of each cell
-input : cell (single cell of the sudoku puzzle) 
-
-output : digit - predicted number
 
 '''
+Extract the digit of each cell
+Input : cell (single cell of the sudoku puzzle) 
+
+Output : digit - predicted number
+
+'''
+
 
 def extract_digit(cell):
     thresh = cv2.threshold(cell, 0, 255, cv2.THRESH_BINARY_INV | cv2.THRESH_OTSU)[1]
@@ -177,7 +180,6 @@ def extract_digit(cell):
 
     digit_contour = max(contours, key=cv2.contourArea)
     mask = np.zeros(thresh.shape, dtype="uint8")
-
 
     cv2.drawContours(mask, [digit_contour], -1, 255, -1)
 
@@ -209,22 +211,25 @@ def check_allowed_values(allowed_values, x, y, value, box_dim=3):
         for j in range(begin_column, begin_column + box_dim):
             allowed_values[i][j][value] = False
 
-'''
-convert the sudoku puzzle to a two dimesional array
-input : img_result - image of the sudoku puzzle
-        model - trained OCR model
-
-
-output : puzzle_wp_colour  - extracted colored grid 
-         puzzle_contour - coordinates of the puzzle
-         dst - coordinates of the perspective transformed puzzle
-         board - two dimensional array containing the puzzle values
-         print_list - locations where we need to place numbers on the sudoku puzzle 
 
 '''
-def get_the_grid(img_result, model, is_a_liveFeed=False):
+Convert the sudoku puzzle to a two dimesional array
+Input : img_result - Image of the sudoku puzzle
+        model - Trained OCR model
+
+
+Output : puzzle_wp_colour  - Extracted colored grid 
+         puzzle_contour - Coordinates of the puzzle
+         dst - Coordinates of the perspective transformed puzzle
+         board - Two dimensional array containing the puzzle values
+         print_list - Locations where we need to place numbers on the sudoku puzzle 
+
+'''
+
+
+def get_the_grid(img_result, model, is_live_feed=False):
     # The warped puzzle,warped puzzle (grayscale), puzzle contour coordinates (in image), warped puzzle corner indices
-    found_puzzle = find_puzzle(img_result, is_a_liveFeed)
+    found_puzzle = find_puzzle(img_result, is_live_feed)
 
     if found_puzzle is None:
         return None

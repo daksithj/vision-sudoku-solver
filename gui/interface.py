@@ -169,7 +169,7 @@ class LiveFeedWindow(Screen):
     def on_pre_enter(self, *args):
         self.ids.unfreeze_button.disabled = True
         self.kill_signal = False
-        self.ids.cam_feed.source = 'resources/logo.png'
+        self.ids.cam_feed.source = 'gui/resources/logo.png'
         self.thread = Thread(target=capture, args=[self.cap, self.frame_rate, self], daemon=True).start()
 
     @mainthread
@@ -208,7 +208,7 @@ class VisionSudokuApp(App):
 
     def build(self):
         self.title = 'Vision Sudoku'
-        self.icon = 'resources/logo.png'
+        self.icon = 'gui/resources/logo.png'
         Builder.load_file('gui/interface.kv')
         window_manager = WindowManager()
         start_window = StartWindow()
