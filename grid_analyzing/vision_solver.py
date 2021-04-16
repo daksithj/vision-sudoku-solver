@@ -2,12 +2,11 @@ import time as t
 import numpy as np
 import cv2
 from keras.models import load_model
-from grid_detection import detect_grid
-from grid_generator import get_the_grid
-from attach_to_grid import print_on_screen
-from sudoku_solver import Sudoku
+from grid_analyzing.grid_generator import get_the_grid
+from grid_analyzing.attach_to_grid import print_on_screen
+from sudoku_solver.sudoku_solver import Sudoku
 
-MODEL_NAME = 'digit_model.h5'
+MODEL_NAME = 'digit_ocr_model/digit_model.h5'
 
 
 class VisionSudokuError(Exception):
@@ -16,16 +15,12 @@ class VisionSudokuError(Exception):
 
 
 def single_image(image_loc):
-
     start_time = t.time()
 
     image = cv2.imread(image_loc)
 
     num_model = load_model(MODEL_NAME)
     read_time = t.time()
-
-    # if not detect_grid(image):
-    #     raise Exception('Cannot detect a grid in the image')
 
     grid_values = get_the_grid(image, num_model)
 
@@ -37,6 +32,7 @@ def single_image(image_loc):
     process_time = t.time()
 
     sudoku_board = Sudoku(board.copy(), 9)
+
     solution = sudoku_board.solve()
 
     solve_time = t.time()
@@ -65,7 +61,6 @@ def single_image(image_loc):
 
 
 def initialize_cam():
-
     frame_width = 960
     frame_height = 720
 
@@ -83,7 +78,6 @@ def initialize_cam():
 
 
 def capture(cap, frame_rate, gui):
-
     num_model = load_model(MODEL_NAME)
 
     prev = 0
@@ -106,11 +100,8 @@ def capture(cap, frame_rate, gui):
 
             img_result = img.copy()
 
-            if not detect_grid(img_result):
-                continue
-
             # Warped puzzle, puzzle contour coordinates, warped puzzle index, sudoku puzzle array, printing args
-            grid_values = get_the_grid(img_result, num_model)
+            grid_values = get_the_grid(img_result, num_model, True)
 
             if grid_values is not None:
                 warped_puzzle, puzzle_contour, crop_indices, board, print_list = grid_values
