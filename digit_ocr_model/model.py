@@ -4,13 +4,16 @@ import cv2
 from keras.layers import Dense, Dropout, Flatten
 from keras.layers import Conv2D, MaxPooling2D
 from keras.utils import np_utils
+from keras.callbacks import ModelCheckpoint
 from tensorflow.python.keras import Sequential
 
 X_train = []
 y_train = []
 
-train_data_size = 60000
+train_data_size = 70000
 test_data_size = 10000
+
+print("Reading data")
 
 with open('number_list.pkl', 'rb') as f:
     num_list = pkl.load(f)
@@ -28,10 +31,11 @@ X_test = []
 y_test = []
 
 for a in range(train_data_size, train_data_size + test_data_size):
-    image = cv2.imread(f'output/{a}.png', cv2.IMREAD_GRAYSCALE)
+    image = cv2.imread(f'ocr_dataset/{a}.png', cv2.IMREAD_GRAYSCALE)
     X_test.append(image)
     y_test.append(num_list[a][1])
 
+print("Processing data")
 
 X_test = np.asarray(X_test)
 y_test = np.asarray(y_test)
@@ -64,9 +68,12 @@ model.add(Dense(128, activation='relu', kernel_initializer='he_uniform'))
 model.add(Dense(50, activation='relu', kernel_initializer='he_uniform'))
 model.add(Dense(10, activation='softmax'))
 
+save_call = ModelCheckpoint("digit_model.h5", monitor='val_loss', verbose=0, save_best_only=False,
+                            save_weights_only=False, mode='auto', period=1)
 
 # compile model
 model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
-model.fit(X_train, y_train, validation_data=(X_test, y_test), epochs=200, batch_size=200)
+print('Started training')
+model.fit(X_train, y_train, validation_data=(X_test, y_test), callbacks=[save_call], epochs=500, batch_size=200)
 
 model.save("digit_model.h5")

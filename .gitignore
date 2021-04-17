@@ -3,4 +3,7 @@ __pycache__
 venv
 *.png
 *.jpg
+*.pkl
 !gui/resources/logo.png
+digit_ocr_model/ocr_dataset
+digit_ocr_dataset/number_list.pkl
