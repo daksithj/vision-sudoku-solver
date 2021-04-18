@@ -271,7 +271,7 @@ def get_the_grid(img_result, model, is_live_feed=False):
             if digit is not None:
 
                 # Resize the cell to 28x28 pixels and then prepare the cell for classification
-                roi = cv2.resize(digit, (28, 28))
+                roi = cv2.resize(digit, (64, 64))
                 roi = roi.astype("float") / 255.0
                 roi = img_to_array(roi)
                 roi = np.expand_dims(roi, axis=0)

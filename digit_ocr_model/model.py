@@ -6,58 +6,18 @@ from keras.layers import Conv2D, MaxPooling2D
 from keras.utils import np_utils
 from keras.callbacks import ModelCheckpoint
 from tensorflow.python.keras import Sequential
-
-X_train = []
-y_train = []
-
-train_data_size = 70000
-test_data_size = 10000
-
-print("Reading data")
-
-with open('number_list.pkl', 'rb') as f:
-    num_list = pkl.load(f)
-
-for a in range(train_data_size):
-    image = cv2.imread(f'ocr_dataset/{a}.png', cv2.IMREAD_GRAYSCALE)
-    X_train.append(image)
-    y_train.append(num_list[a][1])
+from digit_ocr_model.create_dataset import NumberDataSet
 
 
-X_train = np.asarray(X_train)
-y_train = np.asarray(y_train)
+data_size = 70000
+batch_size = 200
+image_dim = 64
 
-X_test = []
-y_test = []
-
-for a in range(train_data_size, train_data_size + test_data_size):
-    image = cv2.imread(f'ocr_dataset/{a}.png', cv2.IMREAD_GRAYSCALE)
-    X_test.append(image)
-    y_test.append(num_list[a][1])
-
-print("Processing data")
-
-X_test = np.asarray(X_test)
-y_test = np.asarray(y_test)
-
-X_train = X_train.reshape(X_train.shape[0], 28, 28, 1).astype('float32')
-X_test = X_test.reshape(X_test.shape[0], 28, 28, 1).astype('float32')
-
-y_train = np_utils.to_categorical(y_train)
-y_test = np_utils.to_categorical(y_test)
-
-# convert from integers to floats
-X_train = X_train.astype('float32')
-X_test = X_test.astype('float32')
-# normalize to range [0,1]
-X_train = X_train / 255.0
-X_test = X_test / 255.0
-
-
+num_data_Set = NumberDataSet((data_size // batch_size), batch_size, image_dim)
 # Create model
 # Building CNN
 model = Sequential()
-model.add(Conv2D(32, (3, 3), activation='relu', kernel_initializer='he_uniform', input_shape=(28, 28, 1)))
+model.add(Conv2D(32, (3, 3), activation='relu', kernel_initializer='he_uniform', input_shape=(image_dim, image_dim, 1)))
 model.add(MaxPooling2D((2, 2)))
 model.add(Conv2D(64, (3, 3), activation='relu', kernel_initializer='he_uniform'))
 model.add(Conv2D(64, (3, 3), activation='relu', kernel_initializer='he_uniform'))
@@ -74,6 +34,6 @@ save_call = ModelCheckpoint("digit_model.h5", monitor='val_loss', verbose=0, sav
 # compile model
 model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
 print('Started training')
-model.fit(X_train, y_train, validation_data=(X_test, y_test), callbacks=[save_call], epochs=500, batch_size=200)
+model.fit(num_data_Set, callbacks=[save_call], epochs=500)
 
 model.save("digit_model.h5")
