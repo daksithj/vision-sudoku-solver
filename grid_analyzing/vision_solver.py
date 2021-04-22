@@ -25,7 +25,9 @@ def single_image(image_loc):
     grid_values = get_the_grid(image, num_model)
 
     if grid_values is not None:
-        warped_puzzle, puzzle_contour, crop_indices, board, print_list = grid_values
+        # Warped puzzle colour image, puzzle contour, quadrangle points of warped image, Sudoku board, empty cell
+        # indices and their locations in the warped image
+        warped_puzzle, puzzle_contour, warped_quadrangle_vertices, board, empty_cells = grid_values
     else:
         raise VisionSudokuError('Cannot extract puzzle from the image.')
 
@@ -40,7 +42,8 @@ def single_image(image_loc):
     if solution is None:
         raise VisionSudokuError("The puzzle was not read properly or it is not solvable.")
 
-    print_image = print_on_screen(warped_puzzle, print_list, solution, image, puzzle_contour, crop_indices)
+    print_image = print_on_screen(warped_puzzle, empty_cells, solution, image, puzzle_contour,
+                                  warped_quadrangle_vertices)
 
     final_time = t.time()
 
@@ -100,11 +103,12 @@ def capture(cap, frame_rate, gui):
 
             img_result = img.copy()
 
-            # Warped puzzle, puzzle contour coordinates, warped puzzle index, sudoku puzzle array, printing args
             grid_values = get_the_grid(img_result, num_model, True)
 
             if grid_values is not None:
-                warped_puzzle, puzzle_contour, crop_indices, board, print_list = grid_values
+                # Warped puzzle colour image, puzzle contour, quadrangle points of warped image, Sudoku board,
+                # empty cell indices and their locations in the warped image
+                warped_puzzle, puzzle_contour, warped_quadrangle_points, board, empty_cells = grid_values
             else:
                 continue
 
@@ -117,7 +121,8 @@ def capture(cap, frame_rate, gui):
             if solution is None:
                 continue
 
-            print_image = print_on_screen(warped_puzzle, print_list, solution, img_result, puzzle_contour, crop_indices)
+            print_image = print_on_screen(warped_puzzle, empty_cells, solution, img_result, puzzle_contour,
+                                          warped_quadrangle_points)
             gui.update(print_image, solution=True)
             solution_found = True
             break

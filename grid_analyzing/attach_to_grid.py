@@ -3,25 +3,28 @@ import numpy as np
 from grid_analyzing.grid_generator import order_points
 
 
-def unwrap_image(img_src, img_dst, ordered_points, crop_indices):
+def unwarp_image(warped_puzzle, original_image, ordered_points, warped_quadrangle_points):
     ordered_points = np.array(ordered_points)
 
-    homography, status = cv2.findHomography(crop_indices, ordered_points)
+    # Perspective transformation between original plane and warped plane
+    homography, _ = cv2.findHomography(warped_quadrangle_points, ordered_points)
 
-    warped = cv2.warpPerspective(img_src, homography, (img_dst.shape[1], img_dst.shape[0]))
+    # Un-warp image
+    warped = cv2.warpPerspective(warped_puzzle, homography, (original_image.shape[1], original_image.shape[0]))
 
-    cv2.fillConvexPoly(img_dst, ordered_points, 0, 16)
+    # Fill puzzle area in the original image with black
+    cv2.fillConvexPoly(original_image, ordered_points, 0, 16)
 
     # Add the un-warped sudoku puzzle to the black area
-    unwrapped_image = cv2.add(img_dst, warped)
+    unwarped_image = cv2.add(original_image, warped)
 
-    return unwrapped_image
+    return unwarped_image
 
 
-def print_on_screen(puzzle, print_list, solution, img_result, puzzle_contour, crop_indices):
+def print_on_screen(warped_puzzle, empty_cells, solution, original_image, puzzle_contour, warped_quadrangle_points):
     # output_image = puzzle.copy()
 
-    for val in print_list:
+    for val in empty_cells:
         start_x, start_y, end_x, end_y = val['location']
 
         # The font size as a scale
@@ -36,11 +39,11 @@ def print_on_screen(puzzle, print_list, solution, img_result, puzzle_contour, cr
         text_y += end_y
 
         index = val['index']
-        cv2.putText(puzzle, str(solution[index[1]][index[0]]), (text_x, text_y),
+        cv2.putText(warped_puzzle, str(solution[index[1]][index[0]]), (text_x, text_y),
                     cv2.FONT_HERSHEY_SIMPLEX, font_scale, (0, 0, 255), thickness)
 
     ordered_points = order_points(puzzle_contour.reshape(4, 2)).astype('int32')
 
-    print_image = unwrap_image(puzzle, img_result, ordered_points, crop_indices)
+    print_image = unwarp_image(warped_puzzle, original_image, ordered_points, warped_quadrangle_points)
 
     return print_image

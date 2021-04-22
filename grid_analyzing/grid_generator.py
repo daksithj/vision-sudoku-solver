@@ -53,17 +53,17 @@ def get_perspective_transform(image, points):
     h_b = np.sqrt(((tl[0] - bl[0]) ** 2) + ((tl[1] - bl[1]) ** 2))
     max_height = max(int(h_a), int(h_b))
 
-    crop_indices = np.array([
+    warped_quadrangle_vertices = np.array([
         [0, 0],
         [max_width - 1, 0],
         [max_width - 1, max_height - 1],
         [0, max_height - 1]], dtype="float32")
 
-    perspective_trans = cv2.getPerspectiveTransform(rect, crop_indices)
+    perspective_trans = cv2.getPerspectiveTransform(rect, warped_quadrangle_vertices)
 
     warped = cv2.warpPerspective(image, perspective_trans, (max_width, max_height))
 
-    return warped, crop_indices
+    return warped, warped_quadrangle_vertices
 
 
 def find_extreme_corners(polygon, limit_fn, compare_fn):
@@ -151,12 +151,12 @@ def find_puzzle(image, is_live_feed=False):
         return None
 
     # The warped extracted puzzle and its corner coordinates (indexes)
-    puzzle_wp_colour, crop_indices = get_perspective_transform(image, puzzle_contour.reshape(4, 2))
+    puzzle_wp_colour, warped_quadrangle_vertices = get_perspective_transform(image, puzzle_contour.reshape(4, 2))
 
     # The warped extracted puzzle (grayscale) and its corner coordinates (indexes)
-    puzzle_wp_gray, crop_indices = get_perspective_transform(gray, puzzle_contour.reshape(4, 2))
+    puzzle_wp_gray, warped_quadrangle_vertices = get_perspective_transform(gray, puzzle_contour.reshape(4, 2))
 
-    return puzzle_wp_colour, puzzle_wp_gray, puzzle_contour, crop_indices
+    return puzzle_wp_colour, puzzle_wp_gray, puzzle_contour, warped_quadrangle_vertices
 
 
 '''
@@ -234,7 +234,8 @@ def get_the_grid(img_result, model, is_live_feed=False):
     if found_puzzle is None:
         return None
     else:
-        puzzle_wp_colour, puzzle_wp_gray, puzzle_contour, dst = found_puzzle
+        # Warped puzzle colour, warped puzzle gray, contour of the puzzle, vertices of the warped quadrangle
+        puzzle_wp_colour, puzzle_wp_gray, puzzle_contour, warped_quadrangle_vertices = found_puzzle
 
     board = np.zeros((9, 9), dtype="int")
 
@@ -243,7 +244,7 @@ def get_the_grid(img_result, model, is_live_feed=False):
         return None
 
     # four_point_transform(img_result.copy(), puzzle_contour.reshape(4, 2))
-    print_list = []
+    empty_cells = []
     digit_count = 0
 
     allowed_values = [[[True for _ in range(9)] for _ in range(9)]
@@ -293,9 +294,9 @@ def get_the_grid(img_result, model, is_live_feed=False):
             else:
 
                 # Coordinates of image to print if it is an empty cell
-                print_list.append({"index": (x, y), "location": (start_x, start_y, end_x, end_y)})
+                empty_cells.append({"index": (x, y), "location": (start_x, start_y, end_x, end_y)})
 
     if digit_count < 17:
         return None
 
-    return puzzle_wp_colour, puzzle_contour, dst, board, print_list
+    return puzzle_wp_colour, puzzle_contour, warped_quadrangle_vertices, board, empty_cells
