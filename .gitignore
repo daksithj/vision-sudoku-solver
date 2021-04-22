@@ -5,5 +5,6 @@ venv
 *.jpg
 *.pkl
 !gui/resources/logo.png
+!gui/resources/preview.png
 digit_ocr_model/ocr_dataset
 digit_ocr_dataset/number_list.pkl
